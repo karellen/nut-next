@@ -1,23 +1,23 @@
-diff -up nut-2.8.4-build/nut-2.8.4/drivers/Makefile.am.rhinoname nut-2.8.4-build/nut-2.8.4/drivers/Makefile.am
---- nut-2.8.4-build/nut-2.8.4/drivers/Makefile.am.rhinoname	2025-08-14 11:08:48.763700333 +0200
-+++ nut-2.8.4-build/nut-2.8.4/drivers/Makefile.am	2025-08-14 11:29:43.803846801 +0200
-@@ -74,7 +74,7 @@ NUTSW_DRIVERLIST = $(NUTSW_DRIVERLIST_DU
+diff -up nut-2.8.5-build/nut-2.8.5/drivers/Makefile.am.rhinoname nut-2.8.5-build/nut-2.8.5/drivers/Makefile.am
+--- nut-2.8.5-build/nut-2.8.5/drivers/Makefile.am.rhinoname	2026-03-22 21:48:48.639424672 +0100
++++ nut-2.8.5-build/nut-2.8.5/drivers/Makefile.am	2026-05-13 10:23:00.444840689 +0200
+@@ -150,7 +150,7 @@ NUTSW_DRIVERLIST = $(NUTSW_DRIVERLIST_DU
  SERIAL_DRIVERLIST = al175 bcmxcp belkin belkinunv bestfcom	\
   bestfortress bestuferrups bestups etapro everups 	\
   gamatronic genericups isbmex liebert liebert-esp2 liebert-gxe masterguard metasys	\
 - mge-utalk microdowell microsol-apc mge-shut nutdrv_hashx oneac optiups powercom powervar_cx_ser rhino	\
 + mge-utalk microdowell microsol-apc mge-shut nutdrv_hashx oneac optiups powercom powervar_cx_ser nutdrv_rhino	\
   safenet nutdrv_siemens-sitop solis tripplite tripplitesu upscode2 victronups powerpanel \
-  blazer_ser ivtscd apcsmart apcsmart-old riello_ser sms_ser bicker_ser ve-direct
+  blazer_ser ivtscd apcsmart apcsmart-old riello_ser sms_ser bicker_ser ve-direct meanwell_ntu
  if HAVE_LINUX_SERIAL_H
-@@ -198,8 +198,8 @@ powerpanel_SOURCES = powerpanel.c powerp
- powerpanel_LDADD = $(LDADD) -lm
+@@ -276,8 +276,8 @@ powerpanel_SOURCES = powerpanel.c powerp
+ powerpanel_LDADD = $(LDADD_DRIVERS_SERIAL) -lm
  powervar_cx_ser_SOURCES = powervar_cx_ser.c powervar_cx.c
  powervar_cx_ser_CFLAGS = $(AM_CFLAGS) -DPVAR_SERIAL=1
 -rhino_SOURCES = rhino.c
--rhino_LDADD = $(LDADD) -lm
+-rhino_LDADD = $(LDADD_DRIVERS_SERIAL) -lm
 +nutdrv_rhino_SOURCES = rhino.c
-+nutdrv_rhino_LDADD = $(LDADD) -lm
++nutdrv_rhino_LDADD = $(LDADD_DRIVERS_SERIAL) -lm
  safenet_SOURCES = safenet.c
  nutdrv_siemens_sitop_SOURCES = nutdrv_siemens_sitop.c
  solis_SOURCES = solis.c

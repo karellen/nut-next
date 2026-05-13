@@ -1,0 +1,12 @@
+diff -up nut-2.8.5-build/nut-2.8.5/configure.ac.nutuser nut-2.8.5-build/nut-2.8.5/configure.ac
+--- nut-2.8.5-build/nut-2.8.5/configure.ac.nutuser	2026-05-13 11:18:01.071952096 +0200
++++ nut-2.8.5-build/nut-2.8.5/configure.ac	2026-05-13 11:18:48.727458477 +0200
+@@ -6254,7 +6254,7 @@ NUT_ARG_WITH_CUSTOM_DEFAULT_HELP([user],
+ AS_CASE([${nut_with_user}],
+ 	[yes|no], [AC_MSG_ERROR(invalid option --with(out)-user - see docs/configure.txt)],
+ 	["${RUN_AS_USER}"], [
+-		 nut_user_given=no
++		 nut_user_given=yes
+ 		 AC_MSG_RESULT([default])
+ 		],
+ 		[RUN_AS_USER="${nut_with_user}"
