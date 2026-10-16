@@ -1,3 +1,5 @@
+# Follows networkupstools/nut master through the 'nut' submodule; a moved submodule is
+# committed, tito-tagged and pushed, and the tag's GitHub 'create' event triggers the COPR build.
 name: karellen-nut-next-update
 on:
   schedule:
