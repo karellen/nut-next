@@ -624,6 +624,12 @@ fi
 %{_libdir}/pkgconfig/libnutscan.pc
 
 %changelog
+* Thu Oct 15 2026 Arcadiy Ivanov <arcadiy@ivanov.biz> 2.8.5.1602-1
+- Fork of the Fedora nut f44 packaging (2.8.5-9) building the NUT trunk (networkupstools/nut master)
+- Rebase the rmpidf and rhinoname patches onto the trunk; drop patches the trunk already contains
+- Build from git: autogen.sh, man pages; package nutauth.conf and new driver man pages
+- EL8/9/10 (EPEL): no NUT-Monitor, no I2C drivers on EL8, create the nut user in %pre
+
 * Wed Oct 07 2026 Michal Hlavinka <mhlavink@redhat.com> - 2.8.5-9
 - fix nut monitor spin CPU after upsd closed connection (rhbz#2539831)
 
