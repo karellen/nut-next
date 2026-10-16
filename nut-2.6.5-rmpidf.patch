@@ -1,18 +1,20 @@
-diff -up nut-2.8.2.1/clients/upsmon.c.rmpidf nut-2.8.2.1/clients/upsmon.c
---- nut-2.8.2.1/clients/upsmon.c.rmpidf	2024-07-03 12:18:04.788135176 +0200
-+++ nut-2.8.2.1/clients/upsmon.c	2024-07-03 12:19:33.164964473 +0200
-@@ -3309,6 +3309,7 @@ int main(int argc, char *argv[])
- 	upslogx(LOG_INFO, "Signal %d: exiting", exit_flag);
+diff --git a/clients/upsmon.c b/clients/upsmon.c
+index a10a2236f..b8aa85c81 100644
+--- a/clients/upsmon.c
++++ b/clients/upsmon.c
+@@ -4754,6 +4754,7 @@ end_loop_cycle:
  	upsnotify(NOTIFY_STATE_STOPPING, "Signal %d: exiting", exit_flag);
+ 	/* TOTHINK: use atexit() instead, to handle any code path? */
  	upsmon_cleanup();
 +	cleanpid(prog);
  
  	upsdebugx(1, "Finally exiting due to signal %d", exit_flag);
  	exit(EXIT_SUCCESS);
-diff -up nut-2.8.2.1/common/common.c.rmpidf nut-2.8.2.1/common/common.c
---- nut-2.8.2.1/common/common.c.rmpidf	2024-07-03 12:14:56.000000000 +0200
-+++ nut-2.8.2.1/common/common.c	2024-07-03 12:18:04.788135176 +0200
-@@ -1338,6 +1338,20 @@ pid_t parsepid(const char *buf)
+diff --git a/common/common.c b/common/common.c
+index 7bbc3230a..1eb185dbe 100644
+--- a/common/common.c
++++ b/common/common.c
+@@ -2505,6 +2505,20 @@ pid_t parsepidfile(const char *pidfn)
  	return pid;
  }
  
@@ -33,10 +35,11 @@ diff -up nut-2.8.2.1/common/common.c.rmpidf nut-2.8.2.1/common/common.c
  /* open pidfn, get the pid, then send it sig
   * returns negative codes for errors, or
   * zero for a successfully sent signal
-diff -up nut-2.8.2.1/include/common.h.rmpidf nut-2.8.2.1/include/common.h
---- nut-2.8.2.1/include/common.h.rmpidf	2024-07-03 12:14:56.000000000 +0200
-+++ nut-2.8.2.1/include/common.h	2024-07-03 12:18:04.788135176 +0200
-@@ -262,6 +262,9 @@ int checkprocname(pid_t pid, const char
+diff --git a/include/common.h b/include/common.h
+index adf01d9d5..dd87d3939 100644
+--- a/include/common.h
++++ b/include/common.h
+@@ -382,6 +382,9 @@ int checkprocname_ignored(const char *caller);
  /* write a pid file - <name> is a full pathname *or* just the program name */
  void writepid(const char *name);
  
@@ -46,13 +49,3 @@ diff -up nut-2.8.2.1/include/common.h.rmpidf nut-2.8.2.1/include/common.h
  /* parses string buffer into a pid_t if it passes
   * a few sanity checks; returns -1 on error */
  pid_t parsepid(const char *buf);
-diff -up nut-2.8.2.1/server/upsd.c.rmpidf nut-2.8.2.1/server/upsd.c
---- nut-2.8.2.1/server/upsd.c.rmpidf	2024-07-03 12:14:56.000000000 +0200
-+++ nut-2.8.2.1/server/upsd.c	2024-07-03 12:18:04.789135186 +0200
-@@ -2304,5 +2304,6 @@ int main(int argc, char **argv)
- 	upsnotify(NOTIFY_STATE_STOPPING, "Signal %d: exiting", exit_flag);
- 
- 	ssl_cleanup();
-+	if (*pidfn) cleanpid(pidfn);
- 	return EXIT_SUCCESS;
- }

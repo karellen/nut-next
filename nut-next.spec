@@ -4,39 +4,56 @@
 %global nut_uid 57
 %global nut_gid 57
 
+%global packagename nut
 %global cgidir  /var/www/nut-cgi-bin
 %global piddir  /run/nut
-%global modeldir %{_libexecdir}/%{name}
+%global modeldir %{_libexecdir}/%{packagename}
 # powerman is retired on Fedora, therefore disable it by default
 %bcond_with powerman
+# python3-pyqt6 (NUT-Monitor) is not available on EL
+%if 0%{?fedora}
+%bcond_without monitor
+%else
+%bcond_with monitor
+%endif
+# libi2c-devel is not available on EL8
+%if 0%{?rhel} == 8
+%bcond_with i2c
+%else
+%bcond_without i2c
+%endif
 
 Summary: Network UPS Tools
-Name: nut
-Version: 2.8.5
-Release: 9%{?dist}
+Name: %{packagename}-next
+Version: 2.8.5.1602
+Release: 1
 License: GPL-2.0-or-later AND GPL-3.0-or-later
-Url: https://www.networkupstools.org/
-Source: https://www.networkupstools.org/source/2.8/%{name}-%{version}.tar.gz
+Url: https://github.com/karellen/nut-next
+Source0: %{name}-%{version}.tar.gz
 Source4: libs.sh
-Patch2: nut-2.8.0-piddir-owner.patch
+# Output of the upstream tools/gitlog2version.sh, so the build knows the git revision without a git checkout
+Source10: VERSION_DEFAULT
+
+Vendor: Karellen, Inc.
+Packager: Karellen, Inc. <supervisor@karellen.co>
 
 #quick fix. TODO: fix it properly
 Patch9: nut-2.6.5-rmpidf.patch
-Patch15: nut-c99-strdup.patch
 Patch16: nut-2.8-rhinoname.patch
-Patch17: nut-2.8.5-nutuser.patch
-# from upstream, for <= 2.8.5, rhbz#2539831
-# https://github.com/networkupstools/nut/commit/3e675fedbbec7f8a38b477e20bb85f00d9a42226
-Patch18: nut-2.8.5-3e675fed.patch
 
+Conflicts: %{packagename}
+Provides: %{packagename} = %{version}-%{release}
 Requires(post): coreutils systemd
 Requires(preun): systemd
 Requires(postun): coreutils systemd
-Recommends: nut-xml
+Recommends: %{name}-xml
 Requires: group(dialout)
 Requires: group(tty)
 
 BuildRequires: asciidoc
+BuildRequires: docbook-style-xsl
+BuildRequires: libxslt
+BuildRequires: perl-interpreter
 BuildRequires: make
 BuildRequires: autoconf
 BuildRequires: automake
@@ -63,7 +80,9 @@ BuildRequires: libtool-ltdl-devel
 BuildRequires: libX11-devel
 BuildRequires: libXpm-devel
 BuildRequires: libmodbus-devel
+%if %{with i2c}
 BuildRequires: libi2c-devel
+%endif
 BuildRequires: neon-devel
 BuildRequires: net-snmp-devel
 BuildRequires: netpbm-devel
@@ -84,9 +103,23 @@ BuildRequires: libusb1-devel
 
 ExcludeArch: s390 s390x
 
-%global restart_flag %{piddir}/%{name}-restart-after-rpm-install
+%global restart_flag %{piddir}/%{packagename}-restart-after-rpm-install
+
+%if 0%{?rhel}
+# rpm on EL does not create the sysusers.d user before installing the files that it owns (EL8/9 have no
+# support, EL10 only runs systemd-sysusers from a file trigger afterwards), so create it like Fedora's epel8
+# branch did, with the same values as nut-common-sysusers.conf
+Requires(pre): shadow-utils
+%global create_nut_user \
+getent group %{packagename} >/dev/null || /usr/sbin/groupadd -r -g %{nut_gid} %{packagename} 2>/dev/null || /usr/sbin/groupadd -r %{packagename} \
+getent passwd %{packagename} >/dev/null || /usr/sbin/useradd -r -u %{nut_uid} -g %{packagename} -G dialout,tty -d %{piddir} -s /bin/false -c "Network UPS Tools" %{packagename} 2>/dev/null || /usr/sbin/useradd -r -g %{packagename} -G dialout,tty -d %{piddir} -s /bin/false -c "Network UPS Tools" %{packagename} \
+:
+%endif
 
 %description
+This NUT spin from Karellen provides curated trunk version builds
+to enable testing latest features.
+
 These programs are part of a developing project to monitor the assortment
 of UPSes that are found out there in the field. Many models have serial
 ports of some kind that allow some form of state checking. This
@@ -95,6 +128,11 @@ live status tracking on web pages, and more.
 
 %package client
 Summary: Network UPS Tools client monitoring utilities
+Conflicts: %{packagename}-client
+Provides: %{packagename}-client = %{version}-%{release}
+%if 0%{?rhel}
+Requires(pre): shadow-utils
+%endif
 Requires(post): systemd
 Requires(preun): systemd
 Requires: group(dialout)
@@ -107,22 +145,33 @@ attached to a different computer on the network.
 
 %package cgi
 Summary: CGI utilities for the Network UPS Tools
+Conflicts: %{packagename}-cgi
+Provides: %{packagename}-cgi = %{version}-%{release}
+%if 0%{?rhel}
+Requires(pre): shadow-utils
+%endif
 Requires: %{name}-client = %{version}-%{release} webserver
 
 %description cgi
 This package includes CGI programs for accessing UPS status via a web
 browser.
 
+%if %{with monitor}
 %package monitor
 Summary: Network UPS Tools monitor application
+Conflicts: %{packagename}-monitor
+Provides: %{packagename}-monitor = %{version}-%{release}
 BuildRequires: python3-pyqt6
 
 %description monitor
 This package contain the Python NUT-Monitor GUI application to
 monitor a UPS.
+%endif
 
 %package xml
 Summary: XML UPS driver for the Network UPS Tools
+Conflicts: %{packagename}-xml
+Provides: %{packagename}-xml = %{version}-%{release}
 Requires: %{name}-client = %{version}-%{release}
 
 %description xml
@@ -131,6 +180,8 @@ capable UPS.
 
 %package devel
 Summary: Development files for NUT Client
+Conflicts: %{packagename}-devel
+Provides: %{packagename}-devel = %{version}-%{release}
 Requires: %{name}-client = %{version}-%{release} webserver openssl-devel
 
 %description devel
@@ -139,28 +190,27 @@ necessary to develop NUT client applications.
 
 %prep
 %setup -q
-#patch -P 2 -p1 -b .piddir-owner
+pushd nut
 %patch -P 9 -p1 -b .rmpidf
-#patch -P 15 -p1
-%patch -P 16 -p2 -b .rhinoname
-%patch -P 17 -p2 -b .nutuser
-%patch -P 18 -p1 -b .3e675fed
+%patch -P 16 -p1 -b .rhinoname
 
-sed -i 's|LIBSSL_LDFLAGS|LIBSSL_LIBS|' lib/libupsclient-config.in
-sed -i 's|LIBSSL_LDFLAGS|LIBSSL_LIBS|' lib/libupsclient.pc.in
+cp -p %{SOURCE10} .
 
 # workaround for multilib conflicts - caused by patch changing modification time of scripts
 find . -mtime -1 -print0 | xargs -0 touch --reference %{SOURCE0}
 
 # fix python site packages check
 sed -i 's|\(PYTHON3\?_SITE_PACKAGES=\)".*"|\1"%{python3_sitelib}"|' m4/nut_check_python.m4
+popd
 
 %build
+pushd nut
 %if 0%{?fedora}
 #--without-gpio is not enough to stop it complaining about missing library
 sed -i 's|with_gpio="[^"]*"|with_gpio="no"|g' configure.ac
 %endif
-autoreconf -i
+# autogen.sh also generates the Augeas lens and USB helper files that only dist tarballs ship
+./autogen.sh
 export CXXFLAGS="-std=c++14 $RPM_OPT_FLAGS"
 # prevent assignment of default value, it would break configure's tests
 export LDFLAGS="-Wl,-z,now"
@@ -173,13 +223,21 @@ export LDFLAGS="-Wl,-z,now"
 %if 0%{?el8}
     --with-nss \
 %endif
+%if %{without i2c}
+    --without-linux_i2c \
+%endif
     --without-wrap \
     --with-cgi \
     --with-python=%{python3} \
     --with-python3=%{python3} \
     --without-python2 \
-    --datadir=%{_datadir}/%{name} \
-    --with-user=%{name} \
+%if %{with monitor}
+    --with-nut_monitor \
+%else
+    --without-nut_monitor \
+%endif
+    --datadir=%{_datadir}/%{packagename} \
+    --with-user=%{packagename} \
     --with-group=dialout \
     --with-statepath=%{piddir} \
     --with-pidpath=%{piddir} \
@@ -198,8 +256,10 @@ export LDFLAGS="-Wl,-z,now"
     --libdir=%{_libdir} \
     --enable-ldflags-nut-rpath=no \
     --enable-ldflags-nut-rpath-cxx=no \
-    --enable-docs-changelog=no
+    --enable-docs-changelog=no \
+    --with-doc=man
 #    --with-doc # does not work in 2.7.1
+# git sources ship no prebuilt man pages and the trunk default (man=auto) silently skips them without asciidoc
 
 # for rhbz#838139 check if still needed?
 sh %{SOURCE4} >>include/config.h
@@ -215,8 +275,10 @@ EOF
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
 sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %make_build LDFLAGS="%{__global_ldflags}"
+popd
 
 %install
+pushd nut
 mkdir -p %{buildroot}%{modeldir} \
          %{buildroot}%{_sysconfdir}/udev/rules.d \
          %{buildroot}%{_sysconfdir}/ups \
@@ -258,6 +320,7 @@ done
 # rename rhino to nutdrv_rhino to prevent file conflict (rhbz#2367057)
 mv %{buildroot}%{_mandir}/man8/rhino.8 %{buildroot}%{_mandir}/man8/nutdrv_rhino.8
 
+%if %{with monitor}
 # install PyNUT
 install -p -D -m 644 scripts/python/module/PyNUT.py %{buildroot}%{python3_sitelib}/PyNUT.py
 # add lowercase name
@@ -274,12 +337,15 @@ do
   ln %{buildroot}%{_datadir}/nut-monitor/app/icons/${res}/nut-monitor.* \
     %{buildroot}%{_datadir}/icons/hicolor/${res}/apps/
 done
+%endif
 
 # Setup permissions for pid file
 touch %{buildroot}/%{piddir}/upsmon.pid
 chmod 0644 %{buildroot}/%{piddir}/upsmon.pid
+popd
 
 %pre
+%{?create_nut_user}
 # do not let upsmon run during upgrade rhbz#916472
 # phase 1: stop upsmon before upsd changes
 if [ "$1" = "2" ]; then
@@ -298,7 +364,13 @@ fi
 %postun
 %systemd_postun_with_restart nut-driver.target nut-server.service
 
+%if 0%{?rhel}
+%pre client
+%{create_nut_user}
 
+%pre cgi
+%{create_nut_user}
+%endif
 
 %post client
 %systemd_post nut-monitor.service nut.target
@@ -320,8 +392,8 @@ else
 fi
 
 %files
-%license COPYING LICENSE-GPL2 LICENSE-GPL3
-%doc ChangeLog AUTHORS MAINTAINERS README docs INSTALL NEWS
+%license nut/COPYING nut/LICENSE-GPL2 nut/LICENSE-GPL3
+%doc nut/AUTHORS nut/MAINTAINERS nut/README.adoc nut/docs nut/INSTALL.nut.adoc nut/NEWS.adoc nut/UPGRADING.adoc
 %config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/ups.conf
 %config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/upsd.conf
 %config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/upsd.users
@@ -354,8 +426,8 @@ fi
 %{_libexecdir}/sockdebug
 %{_datadir}/augeas/lenses/dist/nut*
 %{_datadir}/augeas/lenses/dist/tests/test_nut.aug
-%{_datadir}/%{name}/cmdvartab
-%{_datadir}/%{name}/driver.list
+%{_datadir}/%{packagename}/cmdvartab
+%{_datadir}/%{packagename}/driver.list
 %{_mandir}/man5/ups.conf.5.gz
 %{_mandir}/man5/upsd.conf.5.gz
 %{_mandir}/man5/upsd.users.5.gz
@@ -366,10 +438,13 @@ fi
 %{_mandir}/man8/apc_modbus.8.gz
 
 %{_mandir}/man8/al175.8.gz
+%{_mandir}/man8/apcmicrolink.8.gz
 %{_mandir}/man8/apcsmart.8.gz
 %{_mandir}/man8/apcsmart-old.8.gz
 %{_mandir}/man8/apcupsd-ups.8.gz
+%if %{with i2c}
 %{_mandir}/man8/asem.8.gz
+%endif
 %{_mandir}/man8/bcmxcp.8*
 %{_mandir}/man8/bcmxcp_usb.8.gz
 %{_mandir}/man8/belkin.8.gz
@@ -391,9 +466,11 @@ fi
 %{_mandir}/man8/generic_modbus.8.gz
 %{_mandir}/man8/genericups.8.gz
 %if 0%{?fedora} < 39
-%{_mandir}/man8/generic_gpio.8.gz
+%{_mandir}/man8/generic_gpio_libgpiod.8.gz
 %endif
+%if %{with i2c}
 %{_mandir}/man8/hwmon_ina219.8.gz
+%endif
 %{_mandir}/man8/huawei-ups2000.8.gz
 %{_mandir}/man8/isbmex.8.gz
 %{_mandir}/man8/ivtscd.8.gz
@@ -423,7 +500,9 @@ fi
 %{_mandir}/man8/oneac.8.gz
 %{_mandir}/man8/optiups.8.gz
 %{_mandir}/man8/phoenixcontact_modbus.8.gz
+%if %{with i2c}
 %{_mandir}/man8/pijuice.8.gz
+%endif
 %{_mandir}/man8/powercom.8.gz
 %if %{with powerman}
 %{_mandir}/man8/powerman-pdu.8.gz
@@ -431,6 +510,7 @@ fi
 %{_mandir}/man8/powerpanel.8.gz
 %{_mandir}/man8/powervar_cx_ser.8.gz
 %{_mandir}/man8/powervar_cx_usb.8.gz
+%{_mandir}/man8/ragtech.8.gz
 %{_mandir}/man8/richcomm_usb.8.gz
 %{_mandir}/man8/riello_ser.8.gz
 %{_mandir}/man8/riello_usb.8.gz
@@ -453,16 +533,17 @@ fi
 %{_sysusersdir}/nut-common-sysusers.conf
 
 %files client
-%license COPYING LICENSE-GPL2 LICENSE-GPL3
+%license nut/COPYING nut/LICENSE-GPL2 nut/LICENSE-GPL3
 %dir %{_sysconfdir}/ups
 %config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/nut.conf
+%config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/nutauth.conf
 %config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/upsmon.conf
 %config(noreplace) %attr(640,root,nut) %{_sysconfdir}/ups/upssched.conf
 %{_tmpfilesdir}/nut-common-tmpfiles.conf
 %dir %attr(750,nut,nut) %{_localstatedir}/lib/ups
 # upsmon.pid is written as root, so root needs access for now
 %dir %attr(770,root,dialout) %{piddir}
-%attr(644,nut,nut) %verify(not size mtime md5) /run/%{name}/upsmon.pid
+%attr(644,nut,nut) %verify(not size mtime md5) /run/%{packagename}/upsmon.pid
 %{_bindir}/upsc
 %{_bindir}/upscmd
 %{_bindir}/upslog
@@ -480,6 +561,7 @@ fi
 %{_libdir}/libnutclient.so.*
 %{_libdir}/libnutclientstub.so.*
 %{_mandir}/man5/nut.conf.5.gz
+%{_mandir}/man5/nutauth.conf.5.gz
 %{_mandir}/man5/upsmon.conf.5.gz
 %{_mandir}/man5/upssched.conf.5.gz
 %{_mandir}/man7/nut.7.gz
@@ -492,6 +574,7 @@ fi
 %{_datadir}/nut
 %{_sysusersdir}/nut-common-sysusers.conf
 
+%if %{with monitor}
 %files monitor
 %{_bindir}/nut-monitor
 %{_bindir}/NUT-Monitor
@@ -501,6 +584,7 @@ fi
 %{_datadir}/nut-monitor/
 %{_mandir}/man8/NUT-Monitor*.8.gz
 %pycached %{python3_sitelib}/PyNUT.py
+%endif
 
 %files cgi
 %config(noreplace) %attr(644,root,root) %{_sysconfdir}/ups/hosts.conf

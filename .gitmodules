@@ -1,0 +1,4 @@
+[submodule "nut"]
+	path = nut
+	url = https://github.com/networkupstools/nut
+	branch = master

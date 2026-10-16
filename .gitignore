@@ -16,3 +16,6 @@ nut-2.4.3.tar.gz
 /nut-2.8.3.tar.gz
 /nut-2.8.4.tar.gz
 /nut-2.8.5.tar.gz
+__pycache__/
+.idea/
+.claude-tmp/
