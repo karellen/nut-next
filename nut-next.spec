@@ -25,7 +25,7 @@
 
 Summary: Network UPS Tools
 Name: %{packagename}-next
-Version: 2.8.5.1602
+Version: 2.8.5.1646
 Release: 1
 License: GPL-2.0-or-later AND GPL-3.0-or-later
 Url: https://github.com/karellen/nut-next
@@ -624,6 +624,10 @@ fi
 %{_libdir}/pkgconfig/libnutscan.pc
 
 %changelog
+* Sun Oct 18 2026 Karellen Supervisor <supervisor@karellen.co> 2.8.5.1646-1
+- Update 2026-10-18T18:17:30Z (supervisor@karellen.co)
+- Describe the update workflow (arcadiy@ivanov.biz)
+
 * Thu Oct 15 2026 Arcadiy Ivanov <arcadiy@ivanov.biz> 2.8.5.1602-1
 - Fork of the Fedora nut f44 packaging (2.8.5-9) building the NUT trunk (networkupstools/nut master)
 - Rebase the rmpidf and rhinoname patches onto the trunk; drop patches the trunk already contains
