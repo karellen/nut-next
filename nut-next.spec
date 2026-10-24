@@ -25,7 +25,7 @@
 
 Summary: Network UPS Tools
 Name: %{packagename}-next
-Version: 2.8.5.1697
+Version: 2.8.5.1711
 Release: 1
 License: GPL-2.0-or-later AND GPL-3.0-or-later
 Url: https://github.com/karellen/nut-next
@@ -624,6 +624,9 @@ fi
 %{_libdir}/pkgconfig/libnutscan.pc
 
 %changelog
+* Sat Oct 24 2026 Karellen Supervisor <supervisor@karellen.co> 2.8.5.1711-1
+- Update 2026-10-24T00:41:51Z (supervisor@karellen.co)
+
 * Thu Oct 22 2026 Karellen Supervisor <supervisor@karellen.co> 2.8.5.1697-1
 - Update 2026-10-22T12:26:05Z (supervisor@karellen.co)
 
